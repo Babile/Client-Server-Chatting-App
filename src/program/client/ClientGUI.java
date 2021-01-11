@@ -16,6 +16,8 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class ClientGUI extends Application{
     private Stage ChatStage;
     private Scene scene;
@@ -46,53 +48,61 @@ public class ClientGUI extends Application{
         TextField textAvatar = new TextField();
 
         Button buttonConnect = new Button("Send");
+
         buttonConnect.setOnMouseClicked(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent mouseEvent) {
                 if(mouseEvent.getButton().equals(MouseButton.PRIMARY)){
                     if(mouseEvent.getClickCount() == 1){
-                        onButtonConncectClick(textAvatar.getText());
+                        onButtonConnectClick(textAvatar.getText());
                     }
                 }
             }
         });
 
         GridPane gridPane = new GridPane();
-
+        gridPane.setAlignment(Pos.TOP_CENTER);
         gridPane.setVgap(10);
-        gridPane.setHgap(5);
+        gridPane.setHgap(20);
+
         gridPane.add(labelRegister, 1, 0);
         gridPane.add(name, 0, 1);
         gridPane.add(textAvatar, 1, 1);
-        gridPane.add(buttonConnect, 1, 2, 2, 1);
-
-        gridPane.setAlignment(Pos.TOP_CENTER);
+        gridPane.add(buttonConnect, 1, 2);
 
         this.scene = new Scene(gridPane, 300, 250);
     }
 
+    @Override
+    public void stop() throws Exception{
+        if(this.clientThread != null){
+            this.clientThread.closeConn();
+        }
+    }
 
-    private void onButtonConncectClick(String name){
-        String anwserFromServer = "";
+    private void onButtonConnectClick(String name){
+        AtomicReference<String> anwserFromServer = new AtomicReference<>("");
         try{
-            this.clientThread = new ClientThread();
+            this.clientThread = new ClientThread(name);
             this.clientThread.sendMsgToServer(name);
-            anwserFromServer = this.clientThread.getMsgFromServer();
+            anwserFromServer.set(this.clientThread.getMsgFromServer());
         }
         catch(Exception e){
             System.out.println("[Client] error msg: " + e.getMessage());
         }
 
-        String[] temp = anwserFromServer.split(",");
+        String[] temp = anwserFromServer.get().split(",");
 
-        if(!anwserFromServer.isEmpty()){
+        if(!anwserFromServer.get().isEmpty()){
             if(temp[0].equals("[Server] Client accepted")){
-                this.clientThread.setID(Integer.parseInt(temp[1]));
                 Stage stageConnected = new Stage();
                 stageConnected.setTitle("Registration");
 
                 GridPane gridPaneButton = new GridPane();
+
                 gridPaneButton.setAlignment(Pos.CENTER);
+                gridPaneButton.setHgap(20);
+                gridPaneButton.setVgap(10);
 
                 Label label = new Label("Registration saucerful.");
                 VBox vboxButton = new VBox();
@@ -109,6 +119,18 @@ public class ClientGUI extends Application{
                     TextField textFieldMsgToServer = new TextField();
                     Button buttonClick = new Button("Send");
                     buttonClick.setMinWidth(97);
+
+                    anwserFromServer.set("");
+
+                    buttonClick.setOnAction(event1 -> {
+                        try{
+                            this.clientThread.sendMsgToServer("message," + this.clientThread.getName() + "," + textFieldMsgToServer.getText());
+                            textFieldMsgToServer.setText("");
+                        }
+                        catch(Exception e){
+                            System.out.println("[Client] error msg: " + e.getMessage());
+                        }
+                    });
 
                     HBox hBox = new HBox();
                     hBox.getChildren().addAll(labelMsg, textFieldMsgToServer,buttonClick);
@@ -145,6 +167,8 @@ public class ClientGUI extends Application{
             });
 
             vboxButton.getChildren().addAll(label, buttonClose);
+            gridPaneButton.setHgap(20);
+            gridPaneButton.setVgap(10);
             gridPaneButton.add(vboxButton, 1, 0);
 
             Scene sceneFailedConnection = new Scene(gridPaneButton, 240, 100);

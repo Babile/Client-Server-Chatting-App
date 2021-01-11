@@ -29,7 +29,7 @@ public class ServerGUI extends Application{
     public void stop() throws Exception{
         if(this.server != null){
             this.server.setRunServer(false);
-            this.server.closeConn();
+            this.server.shutDown();
         }
     }
 
@@ -38,12 +38,19 @@ public class ServerGUI extends Application{
         hBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(5);
 
+        Button buttonStop = new Button("Stop Server");
         Button buttonStart = new Button("Start Server");
+        buttonStop.setDisable(true);
+
         buttonStart.setOnAction(event -> {
+            buttonStop.setDisable(false);
+            buttonStart.setDisable(true);
             startServer();
         });
-        Button buttonStop = new Button("Stop Server");
+
         buttonStop.setOnAction(event -> {
+            buttonStop.setDisable(true);
+            buttonStart.setDisable(false);
             stopServer();
         });
 
@@ -56,6 +63,7 @@ public class ServerGUI extends Application{
         try{
             this.server = new Server(9000);
             Thread thread = new Thread(this.server);
+            thread.setDaemon(true);
             thread.start();
         }
         catch(Exception e){
@@ -66,7 +74,7 @@ public class ServerGUI extends Application{
     private void stopServer(){
         if(this.server != null){
             this.server.setRunServer(false);
-            this.server.closeConn();
+            this.server.shutDown();
         }
     }
 }

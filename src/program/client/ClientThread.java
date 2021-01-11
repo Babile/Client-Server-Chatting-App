@@ -10,36 +10,33 @@ public class ClientThread{
     private Socket socket;
     private BufferedReader fromServer;
     private PrintWriter toServer;
-    private int ID;
+    private String name;
 
-    public ClientThread(){
+    public ClientThread(String name){
         try{
+            this.name = name;
             this.socket = new Socket("127.0.0.1", 9000);
             this.fromServer = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
             this.toServer = new PrintWriter(this.socket.getOutputStream(), true);
         } catch(IOException e){
-            System.out.println("[Client] error msg: " + e.getMessage());
+            System.out.println("[Client] error msg: ");
+            e.printStackTrace();
         }
-    }
-
-    public int getID(){
-        return this.ID;
-    }
-
-    public void setID(int ID){
-        this.ID = ID;
     }
 
     public void closeConn(){
         try{
             if(this.fromServer != null || this.toServer != null || this.socket != null){
+                System.out.println("[Client] Exit message send to Server.");
+                this.toServer.println("exit," + socket.getPort());
                 this.fromServer.close();
                 this.toServer.close();
                 this.socket.close();
             }
         }
         catch(IOException e){
-            System.out.println("[Client] error msg: " + e.getMessage());
+            System.out.println("[Client] error msg: ");
+            e.printStackTrace();
         }
     }
 
@@ -48,12 +45,21 @@ public class ClientThread{
         this.toServer.println(msg);
     }
 
-    public String getMsgFromServer(){
+    public void getMsgFromServer(){
         try{
-            System.out.println("[Client] Received message from Server.");
-            return this.fromServer.readLine();
+            System.out.println("[Client] Message receive from Server.");
+            this.fromServer.readLine();
         } catch(IOException e){
-            return "[Client] error msg: " + e.getMessage();
+            System.out.println("[Client] error msg: ");
+            e.printStackTrace();
         }
+    }
+
+    public String getName(){
+        return this.name;
+    }
+
+    public void setName(String name){
+        this.name = name;
     }
 }
