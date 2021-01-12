@@ -22,6 +22,8 @@ public class ClientGUI extends Application{
     private Stage ChatStage;
     private Scene scene;
     private ClientThread clientThread;
+    private Thread thread;
+    public static TextArea messages;
 
     public static void main(String[] args){
         launch(args);
@@ -81,85 +83,83 @@ public class ClientGUI extends Application{
     }
 
     private void onButtonConnectClick(String name){
-        AtomicReference<String> anwserFromServer = new AtomicReference<>("");
         try{
             this.clientThread = new ClientThread(name);
+            this.thread = new Thread(this.clientThread);
+            this.thread.setDaemon(true);
+            this.thread.start();
             this.clientThread.sendMsgToServer(name);
-            anwserFromServer.set(this.clientThread.getMsgFromServer());
         }
         catch(Exception e){
             System.out.println("[Client] error msg: " + e.getMessage());
         }
 
-        String[] temp = anwserFromServer.get().split(",");
+        if(!this.clientThread.isConnected()){
+            Stage stageConnected = new Stage();
+            stageConnected.setTitle("Registration");
 
-        if(!anwserFromServer.get().isEmpty()){
-            if(temp[0].equals("[Server] Client accepted")){
-                Stage stageConnected = new Stage();
-                stageConnected.setTitle("Registration");
+            GridPane gridPaneButton = new GridPane();
 
-                GridPane gridPaneButton = new GridPane();
+            gridPaneButton.setAlignment(Pos.CENTER);
+            gridPaneButton.setHgap(20);
+            gridPaneButton.setVgap(10);
 
-                gridPaneButton.setAlignment(Pos.CENTER);
-                gridPaneButton.setHgap(20);
-                gridPaneButton.setVgap(10);
+            Label label = new Label("Registration saucerful.");
+            VBox vboxButton = new VBox();
+            vboxButton.setSpacing(5);
+            Button buttonClose = new Button("OK");
 
-                Label label = new Label("Registration saucerful.");
-                VBox vboxButton = new VBox();
-                Button buttonClose = new Button("OK");
+            buttonClose.setOnAction(event -> {
+                messages = new TextArea();
+                messages.setEditable(false);
+                messages.setFont(new Font(15));
+                messages.setPrefWidth(300);
+                messages.setPrefHeight(220);
 
-                buttonClose.setOnAction(event -> {
-                    TextArea messages = new TextArea();
-                    messages.setEditable(false);
-                    messages.setFont(new Font(15));
-                    messages.setPrefWidth(300);
-                    messages.setPrefHeight(220);
+                Label labelMsg = new Label("Message: ");
+                TextField textFieldMsgToServer = new TextField();
+                Button buttonClick = new Button("Send");
+                buttonClick.setMinWidth(97);
 
-                    Label labelMsg = new Label("Message: ");
-                    TextField textFieldMsgToServer = new TextField();
-                    Button buttonClick = new Button("Send");
-                    buttonClick.setMinWidth(97);
-
-                    anwserFromServer.set("");
-
-                    buttonClick.setOnAction(event1 -> {
-                        try{
-                            this.clientThread.sendMsgToServer("message," + this.clientThread.getName() + "," + textFieldMsgToServer.getText());
-                            textFieldMsgToServer.setText("");
-                        }
-                        catch(Exception e){
-                            System.out.println("[Client] error msg: " + e.getMessage());
-                        }
-                    });
-
-                    HBox hBox = new HBox();
-                    hBox.getChildren().addAll(labelMsg, textFieldMsgToServer,buttonClick);
-
-                    VBox vbox = new VBox();
-                    vbox.getChildren().addAll(messages, hBox);
-
-                    Scene sceneChat = new Scene(vbox, 300, 250);
-                    this.ChatStage.setScene(sceneChat);
-                    stageConnected.close();
+                buttonClick.setOnAction(event1 -> {
+                    try{
+                        this.clientThread.sendMsgToServer("message," + this.clientThread.getName() + "," + textFieldMsgToServer.getText());
+                        textFieldMsgToServer.setText("");
+                    }
+                    catch(Exception e){
+                        System.out.println("[Client] error msg: " + e.getMessage());
+                    }
                 });
 
-                vboxButton.getChildren().addAll(label, buttonClose);
-                gridPaneButton.add(vboxButton, 1, 0);
+                HBox hBox = new HBox();
+                hBox.getChildren().addAll(labelMsg, textFieldMsgToServer,buttonClick);
 
-                Scene sceneConnected = new Scene(gridPaneButton, 240, 100);
-                stageConnected.setScene(sceneConnected);
-                stageConnected.showAndWait();
-            }
+                VBox vbox = new VBox();
+                vbox.getChildren().addAll(messages, hBox);
+
+                Scene sceneChat = new Scene(vbox, 300, 250);
+                this.ChatStage.setScene(sceneChat);
+                this.ChatStage.setTitle("Client: " + name);
+                stageConnected.close();
+            });
+
+            vboxButton.getChildren().addAll(label, buttonClose);
+            gridPaneButton.add(vboxButton, 1, 0);
+
+            Scene sceneConnected = new Scene(gridPaneButton, 240, 100);
+            stageConnected.setScene(sceneConnected);
+            stageConnected.showAndWait();
         }
         else{
             Stage stageFailedConnection = new Stage();
-            stageFailedConnection.setTitle("Registracija");
+            stageFailedConnection.setTitle("Registration");
 
             GridPane gridPaneButton = new GridPane();
             gridPaneButton.setAlignment(Pos.CENTER);
 
-            Label label = new Label("Registracija nije uspela.");
+            Label label = new Label("Registration failed.");
             VBox vboxButton = new VBox();
+            vboxButton.setSpacing(5);
             Button buttonClose = new Button("OK");
 
             buttonClose.setOnAction(event -> {

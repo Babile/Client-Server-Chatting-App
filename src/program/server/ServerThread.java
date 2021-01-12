@@ -1,5 +1,7 @@
 package program.server;
 
+import javafx.application.Platform;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -11,6 +13,7 @@ public class ServerThread implements Runnable{
     private Socket socket;
     private BufferedReader fromClient;
     private PrintWriter toClient;
+    private String name;
 
     public ServerThread(Socket socket){
         this.isRunServerThread = true;
@@ -34,6 +37,10 @@ public class ServerThread implements Runnable{
 
                 if(!pass){
                     System.out.println("[Server] Received message from Client");
+                    Platform.runLater(() -> {
+                        ServerGUI.clients.appendText(rows[0] + "\n");
+                    });
+                    name = rows[0];
                     sendMessageToClient("[Server] Client accepted");
                     pass = true;
                 }
@@ -41,10 +48,19 @@ public class ServerThread implements Runnable{
                 else if(rows[0].equals("exit")){
                     System.out.println("[Server] Client exits.");
                     if(!Server.clientList.isEmpty()){
+                        Platform.runLater(() -> {
+                            ServerGUI.clients.clear();
+                            ServerGUI.clients.setText("");
+                        });
                         for(ServerThread client : Server.clientList) {
                             if(client.getPortOfClient() == Integer.parseInt(rows[1])){
                                 client.shutDown();
                                 Server.clientList.remove(client);
+                            }
+                            else {
+                                Platform.runLater(() -> {
+                                    ServerGUI.clients.appendText(client.name + "\n");
+                                });
                             }
                         }
                     }
@@ -53,7 +69,7 @@ public class ServerThread implements Runnable{
                     System.out.println("[Server] Received message from Client");
                     if(!Server.clientList.isEmpty()){
                         for(ServerThread client : Server.clientList) {
-                            client.sendMessageToClient(rows[1] + "," + rows[2]);
+                            client.sendMessageToClient(rows[0] + "," + rows[1] + "," + rows[2]);
                         }
                     }
                 }

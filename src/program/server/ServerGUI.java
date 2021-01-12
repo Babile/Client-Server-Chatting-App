@@ -4,12 +4,17 @@ import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 public class ServerGUI extends Application{
     private Server server;
     private Scene sceneServer;
+    public static TextArea clients;
 
     public static void main(String[] args){
         launch(args);
@@ -34,6 +39,7 @@ public class ServerGUI extends Application{
     }
 
     private void setScene(){
+        clients = new TextArea();
         HBox hBox = new HBox();
         hBox.setAlignment(Pos.CENTER);
         hBox.setSpacing(5);
@@ -56,7 +62,25 @@ public class ServerGUI extends Application{
 
         hBox.getChildren().addAll(buttonStart, buttonStop);
 
-        this.sceneServer = new Scene(hBox, 300, 250);
+        clients.setEditable(false);
+        clients.setFont(new Font(15));
+        clients.setPrefWidth(100);
+        clients.setPrefHeight(120);
+
+        Label listClients = new Label("Connected clients:");
+        listClients.setFont(new Font(15));
+
+        GridPane gridPaneButton = new GridPane();
+
+        gridPaneButton.setAlignment(Pos.CENTER);
+        gridPaneButton.setHgap(20);
+        gridPaneButton.setVgap(10);
+
+        gridPaneButton.add(hBox, 0, 0);
+        gridPaneButton.add(listClients, 0, 1);
+        gridPaneButton.add(clients, 0, 2);
+
+        this.sceneServer = new Scene(gridPaneButton, 300, 250);
     }
 
     private void startServer(){
